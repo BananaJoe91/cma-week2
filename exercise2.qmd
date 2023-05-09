@@ -1,0 +1,141 @@
+---
+title: "Untitled"
+format: html
+---
+
+https://github.com/BananaJoe91/cma-week2
+
+#Demo
+
+```{r}
+
+now <- Sys.time()
+
+now
+
+later <- now + 10000
+
+difference <- as.numeric(difftime(later, now, units = "mins"))
+
+
+
+```
+
+
+##demonstrate lead and lag
+
+```{r}
+library(dplyr)
+
+mynumbers <- 1:10
+
+lead(mynumbers, 2)
+
+###lag is opposite of lead
+
+
+wildschwein <- tibble(
+    TierID = c(rep("Hans", 5), rep("Klara", 5)),
+    DatetimeUTC = rep(as.POSIXct("2015-01-01 00:00:00", tz = "UTC") + 0:4 * 15 * 60, 2)
+)
+
+
+wildschwein$diff <- as.numeric(lead(wildschwein$DatetimeUTC) -  wildschwein$DatetimeUTC)
+
+wildschwein <- group_by(wildschwein, TierID)
+wildschwein <-  mutate(wildschwein, diff = as.numeric(lead(DatetimeUTC - DatetimeUTC)))
+
+
+wildschwein <- wildschwein |>
+  group_by(TierID) |> 
+   mutate(diff = as.numeric(lead(DatetimeUTC - DatetimeUTC)))
+
+
+
+```
+
+
+#Exercise 2 Task 1
+
+```{r}
+library("readr") 
+library("sf") 
+
+wildschwein_BE <- read_delim("wildschwein_BE_2056.csv", ",")
+
+wildschwein_BE <- st_as_sf(wildschwein_BE, coords = c("E", "N"), crs = 2056, remove = FALSE)
+
+
+
+
+```
+
+
+#Task 2
+
+```{r}
+
+wildschwein_BE$TierID |> 
+  unique()
+
+library(ggplot2)
+
+ggplot(wildschwein_BE, aes(DatetimeUTC, TierName))+
+  geom_point()
+
+
+wildschwein_BE <- wildschwein_BE |>
+  group_by(TierName) |> 
+   mutate(diff_s = as.numeric(difftime(lead(DatetimeUTC), DatetimeUTC)))
+
+ggplot(wildschwein_BE, aes(diff_s/60))+
+  geom_histogram(binwidth = 1)+
+  lims(x = c(0,5000/60))+
+  scale_y_log10()
+
+
+wildschwein_BE |> 
+  filter(DatetimeUTC < "2014-08-24") |>
+  ggplot(aes(DatetimeUTC, diff_s, colour = TierName))+
+  geom_point()+
+  geom_line()
+  
+  
+```
+
+
+#Task 3
+
+
+```{r}
+N1 <- 1204752
+N2 <- 1204863
+E1 <- 2570409
+E2 <- 2570402
+
+dist <- sqrt((E1-E2)^2 + (N1-N2)^2)
+dist_2 <- sqrt((wildschwein_BE$E-lead(wildschwein_BE$E,1))^2 + (wildschwein_BE$N-lead(wildschwein_BE$N,1)^2))
+
+wildschwein_BE <- wildschwein_BE |> 
+  group_by(TierName) |> 
+  mutate(steplength =  sqrt((E-lead(E,1))^2 + (N-lead(N,1))^2))
+  
+
+wildschwein_BE |> 
+  mutate(speed_ms = steplength/diff_s)
+
+caro <- read.csv("caro60.csv", sep = ",")
+
+caro <- st_as_sf(caro, coords = c("E", "N"), crs = 2056, remove = FALSE)
+
+nrow(caro)
+## [1] 200
+nrow(caro_3)
+## [1] 67
+nrow(caro_6)
+## [1] 34
+nrow(caro_9)
+## [1] 23
+
+```
+
